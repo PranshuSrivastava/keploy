@@ -26,6 +26,7 @@ var Emoji = "\U0001F430" + " Keploy:"
 type tester struct {
 	logger *zap.Logger
 	mutex  sync.Mutex
+	proxyInterface proxy.ProxyInterface
 }
 
 func NewTester(logger *zap.Logger) Tester {
@@ -55,13 +56,13 @@ func (t *tester) Test(path, testReportPath string, appCmd, appContainer, appNetw
 	}
 
 	// start the proxies
-	ps := proxy.BootProxies(t.logger, proxy.Option{}, appCmd, appContainer)
+	ps := t.proxyInterface.BootProxies(t.logger, proxy.Option{}, appCmd, appContainer)
 
 	// proxy update its state in the ProxyPorts map
 	ps.SetHook(loadedHooks)
 
 	//Sending Proxy Ip & Port to the ebpf program
-	if err := loadedHooks.SendProxyInfo(ps.IP4, ps.Port, ps.IP6); err != nil {
+	if err := loadedHooks.SendProxyInfo(ps.GetIP4(), ps.GetPort(), ps.GetIP6()); err != nil {
 		return false
 	}
 

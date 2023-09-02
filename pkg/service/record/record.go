@@ -6,17 +6,27 @@ import (
 	"go.keploy.io/server/pkg/platform/yaml"
 	"go.keploy.io/server/pkg/proxy"
 	"go.uber.org/zap"
+	"fmt"
 )
 
 var Emoji = "\U0001F430" + " Keploy:"
 
 type recorder struct {
 	logger *zap.Logger
+	proxyInterface proxy.ProxyInterface
 }
 
-func NewRecorder(logger *zap.Logger) Recorder {
+// func NewRecorderWithProxy(logger *zap.Logger, proxySet proxy.ProxyInterface) Recorder {
+// 	return &recorder{
+// 		logger: logger,
+
+// 	}
+// }
+//Overload the NewRecorder function to accept only the logger
+func NewRecorder(logger *zap.Logger, proxySet proxy.ProxyInterface) Recorder {
 	return &recorder{
 		logger: logger,
+		proxyInterface: proxySet,
 	}
 }
 
@@ -39,14 +49,17 @@ func (r *recorder) CaptureTraffic(path string, appCmd, appContainer, appNetwork 
 		return
 	}
 
+	var test proxy.ProxySetInterface = (*proxy.ProxySet)(nil)
+	fmt.Println(test)
 	// start the proxies
-	ps := proxy.BootProxies(r.logger, proxy.Option{}, appCmd, appContainer)
+
+	ps := r.proxyInterface.BootProxies(r.logger, proxy.Option{}, appCmd, appContainer)
 
 	//proxy fetches the destIp and destPort from the redirect proxy map
 	ps.SetHook(loadedHooks)
 
 	//Sending Proxy Ip & Port to the ebpf program
-	if err := loadedHooks.SendProxyInfo(ps.IP4, ps.Port, ps.IP6); err != nil {
+	if err := loadedHooks.SendProxyInfo(ps.GetIP4(), ps.GetPort(), ps.GetIP6()); err != nil {
 		return
 	}
 	// time.

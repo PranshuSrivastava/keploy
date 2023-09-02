@@ -9,11 +9,12 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.keploy.io/server/pkg/service/record"
+	"go.keploy.io/server/pkg/proxy"
 	"go.uber.org/zap"
 )
 
 func NewCmdRecord(logger *zap.Logger) *Record {
-	recorder := record.NewRecorder(logger)
+	recorder := record.NewRecorder(logger, proxy.ProxySet{})
 	return &Record{
 		recorder: recorder,
 		logger:   logger,
