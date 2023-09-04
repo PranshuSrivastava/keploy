@@ -1,0 +1,98 @@
+version: api.keploy.io/v1beta2
+kind: Mongo
+name: mocks
+spec:
+    metadata:
+        operation: '{ OpMsg flags: 0, sections: [{ SectionSingle msg: {"update":"url-shortener","ordered":true,"writeConcern":{"w":"majority"},"lsid":{"id":{"$binary":{"base64":"c0KoeWxxRjiSoqbWeQbjBQ==","subType":"04"}}},"$db":"keploy"} }, { SectionSingle identifier: updates , msgs: [ {"q":{"_id":"CJBKJd92"},"u":{"$set":{"_id":"CJBKJd92","created":{"$date":{"$numberLong":"1693811040773"}},"updated":{"$date":{"$numberLong":"1693811040773"}},"url":"https://facebook.com"}},"upsert":true} ] }], checksum: 0 }'
+    requests:
+        - header:
+            length: 303
+            requestId: 5
+            responseTo: 0
+            Opcode: 2013
+          message:
+            flagBits: 0
+            sections:
+                - '{ SectionSingle msg: {"update":"url-shortener","ordered":true,"writeConcern":{"w":"majority"},"lsid":{"id":{"$binary":{"base64":"c0KoeWxxRjiSoqbWeQbjBQ==","subType":"04"}}},"$db":"keploy"} }'
+                - '{ SectionSingle identifier: updates , msgs: [ {"q":{"_id":"CJBKJd92"},"u":{"$set":{"_id":"CJBKJd92","created":{"$date":{"$numberLong":"1693811040773"}},"updated":{"$date":{"$numberLong":"1693811040773"}},"url":"https://facebook.com"}},"upsert":true} ] }'
+            checksum: 0
+          read_delay: 1270800
+    responses:
+        - header:
+            length: 60
+            requestId: 104
+            responseTo: 5
+            Opcode: 2013
+          message:
+            flagBits: 0
+            sections:
+                - '{ SectionSingle msg: {"n":{"$numberInt":"1"},"nModified":{"$numberInt":"1"},"ok":{"$numberDouble":"1.0"}} }'
+            checksum: 0
+          read_delay: 26373467
+    created: 1693811040
+---
+version: api.keploy.io/v1beta2
+kind: Mongo
+name: mocks
+spec:
+    metadata:
+        operation: '{ OpMsg flags: 0, sections: [{ SectionSingle msg: {"update":"url-shortener","ordered":true,"writeConcern":{"w":"majority"},"lsid":{"id":{"$binary":{"base64":"nplNbj1SRCSSUuMXMqA2pw==","subType":"04"}}},"$db":"keploy"} }, { SectionSingle identifier: updates , msgs: [ {"q":{"_id":"CJBKJd92"},"u":{"$set":{"_id":"CJBKJd92","created":{"$date":{"$numberLong":"1693811051467"}},"updated":{"$date":{"$numberLong":"1693811051467"}},"url":"https://facebook.com"}},"upsert":true} ] }], checksum: 0 }'
+    requests:
+        - header:
+            length: 303
+            requestId: 10
+            responseTo: 0
+            Opcode: 2013
+          message:
+            flagBits: 0
+            sections:
+                - '{ SectionSingle msg: {"update":"url-shortener","ordered":true,"writeConcern":{"w":"majority"},"lsid":{"id":{"$binary":{"base64":"nplNbj1SRCSSUuMXMqA2pw==","subType":"04"}}},"$db":"keploy"} }'
+                - '{ SectionSingle identifier: updates , msgs: [ {"q":{"_id":"CJBKJd92"},"u":{"$set":{"_id":"CJBKJd92","created":{"$date":{"$numberLong":"1693811051467"}},"updated":{"$date":{"$numberLong":"1693811051467"}},"url":"https://facebook.com"}},"upsert":true} ] }'
+            checksum: 0
+          read_delay: 409950
+    responses:
+        - header:
+            length: 60
+            requestId: 108
+            responseTo: 10
+            Opcode: 2013
+          message:
+            flagBits: 0
+            sections:
+                - '{ SectionSingle msg: {"n":{"$numberInt":"1"},"nModified":{"$numberInt":"1"},"ok":{"$numberDouble":"1.0"}} }'
+            checksum: 0
+          read_delay: 10659327
+    created: 1693811051
+---
+version: api.keploy.io/v1beta2
+kind: Mongo
+name: mocks
+spec:
+    metadata:
+        operation: '{ OpMsg flags: 0, sections: [{ SectionSingle msg: {"update":"url-shortener","ordered":true,"writeConcern":{"w":"majority"},"lsid":{"id":{"$binary":{"base64":"c3KWj/bOSimmMjH8Wi5MyQ==","subType":"04"}}},"$db":"keploy"} }, { SectionSingle identifier: updates , msgs: [ {"q":{"_id":"CJBKJd92"},"u":{"$set":{"_id":"CJBKJd92","created":{"$date":{"$numberLong":"1693811059954"}},"updated":{"$date":{"$numberLong":"1693811059954"}},"url":"https://facebook.com"}},"upsert":true} ] }], checksum: 0 }'
+    requests:
+        - header:
+            length: 303
+            requestId: 15
+            responseTo: 0
+            Opcode: 2013
+          message:
+            flagBits: 0
+            sections:
+                - '{ SectionSingle msg: {"update":"url-shortener","ordered":true,"writeConcern":{"w":"majority"},"lsid":{"id":{"$binary":{"base64":"c3KWj/bOSimmMjH8Wi5MyQ==","subType":"04"}}},"$db":"keploy"} }'
+                - '{ SectionSingle identifier: updates , msgs: [ {"q":{"_id":"CJBKJd92"},"u":{"$set":{"_id":"CJBKJd92","created":{"$date":{"$numberLong":"1693811059954"}},"updated":{"$date":{"$numberLong":"1693811059954"}},"url":"https://facebook.com"}},"upsert":true} ] }'
+            checksum: 0
+          read_delay: 387161
+    responses:
+        - header:
+            length: 60
+            requestId: 112
+            responseTo: 15
+            Opcode: 2013
+          message:
+            flagBits: 0
+            sections:
+                - '{ SectionSingle msg: {"n":{"$numberInt":"1"},"nModified":{"$numberInt":"1"},"ok":{"$numberDouble":"1.0"}} }'
+            checksum: 0
+          read_delay: 3799545
+    created: 1693811059

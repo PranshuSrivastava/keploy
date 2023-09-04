@@ -9,11 +9,12 @@ import (
 
 	"github.com/spf13/cobra"
 	"go.keploy.io/server/pkg/service/test"
+	"go.keploy.io/server/pkg/proxy"
 	"go.uber.org/zap"
 )
 
 func NewCmdTest(logger *zap.Logger) *Test {
-	tester := test.NewTester(logger)
+	tester := test.NewTester(logger, proxy.ProxySet{})
 	return &Test{
 		tester: tester,
 		logger: logger,

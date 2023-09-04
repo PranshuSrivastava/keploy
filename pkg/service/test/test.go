@@ -29,10 +29,11 @@ type tester struct {
 	proxyInterface proxy.ProxyInterface
 }
 
-func NewTester(logger *zap.Logger) Tester {
+func NewTester(logger *zap.Logger, proxySet proxy.ProxyInterface) Tester {
 	return &tester{
 		logger: logger,
 		mutex:  sync.Mutex{},
+		proxyInterface: proxySet,
 	}
 }
 

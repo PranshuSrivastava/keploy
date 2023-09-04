@@ -6,7 +6,6 @@ import (
 	"go.keploy.io/server/pkg/platform/yaml"
 	"go.keploy.io/server/pkg/proxy"
 	"go.uber.org/zap"
-	"fmt"
 )
 
 var Emoji = "\U0001F430" + " Keploy:"
@@ -49,10 +48,7 @@ func (r *recorder) CaptureTraffic(path string, appCmd, appContainer, appNetwork 
 		return
 	}
 
-	var test proxy.ProxySetInterface = (*proxy.ProxySet)(nil)
-	fmt.Println(test)
 	// start the proxies
-
 	ps := r.proxyInterface.BootProxies(r.logger, proxy.Option{}, appCmd, appContainer)
 
 	//proxy fetches the destIp and destPort from the redirect proxy map
