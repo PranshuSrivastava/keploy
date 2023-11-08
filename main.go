@@ -15,7 +15,7 @@ import (
 // see https://goreleaser.com/customization/build/
 
 var version string
-var dsn string
+var dsn = "https://fd3cdb889ead5026b4a73a8b8c5b433f@o4506071098195968.ingest.sentry.io/4506071101472768"
 
 const logo string = `
        ▓██▓▄

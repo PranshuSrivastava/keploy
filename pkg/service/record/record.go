@@ -28,8 +28,7 @@ func NewRecorder(logger *zap.Logger) Recorder {
 	}
 }
 
-func (r *recorder) CaptureTraffic(path string, proxyPort uint32, appCmd, appContainer, appNetwork string, Delay uint64, ports []uint) {
-
+func (r *recorder) CaptureTraffic(path string, proxyPort uint32, appCmd, appContainer, appNetwork string, Delay uint64, ports []uint, disableSentry string) {
 	var ps *proxy.ProxySet
 
 	stopper := make(chan os.Signal, 1)

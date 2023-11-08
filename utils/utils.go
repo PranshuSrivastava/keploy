@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"os"
 	"time"
+	"go.uber.org/zap/zapcore"
 
 	sentry "github.com/getsentry/sentry-go"
 )
@@ -41,5 +42,13 @@ func HandlePanic() {
 		attachLogFileToSentry("./keploy-logs.txt")
 		sentry.CaptureException(errors.New(fmt.Sprint(r)))
 		sentry.Flush(time.Second * 2)
+	}
+}
+
+func DisableSentry(){
+	sentry.CurrentHub().BindClient(&sentry.Client{})
+	var cores []zapcore.Core
+	for _, core := loggerCores{
+		
 	}
 }

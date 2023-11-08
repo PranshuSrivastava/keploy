@@ -38,7 +38,7 @@ func readRecordConfig() (*models.Record, error) {
 	return &doc.Record, nil
 }
 
-func (t *Record) GetRecordConfig(path *string, proxyPort *uint32, appCmd *string, appContainer, networkName *string, Delay *uint64, passThorughPorts *[]uint) {
+func (t *Record) GetRecordConfig(path *string, proxyPort *uint32, appCmd *string, appContainer, networkName *string, Delay *uint64, passThorughPorts *[]uint, disableSentry *string) {
 	if isExist := utils.CheckFileExists(filepath.Join(".", "keploy-config.yaml")); !isExist {
 		t.logger.Info("keploy configuration file not found")
 		return
@@ -68,6 +68,9 @@ func (t *Record) GetRecordConfig(path *string, proxyPort *uint32, appCmd *string
 	}
 	if len(*passThorughPorts) == 0 {
 		*passThorughPorts = confRecord.PassThroughPorts
+	}
+	if *disableSentry == "" {
+		*disableSentry = "false"
 	}
 }
 
@@ -115,7 +118,7 @@ func (r *Record) GetCmd() *cobra.Command {
 			if err != nil {
 				r.logger.Error("Failed to get the command to run the user application", zap.Error((err)))
 			}
-			
+
 			if appCmd == "" {
 				fmt.Println("Error: missing required -c flag\n")
 				if isDockerCmd {
@@ -172,10 +175,20 @@ func (r *Record) GetCmd() *cobra.Command {
 				return err
 			}
 
-			r.GetRecordConfig(&path, &proxyPort, &appCmd, &appContainer, &networkName, &delay, &ports)
+			disableSentry, err := cmd.Flags().GetString("disableSentry")
+			if err != nil {
+				r.logger.Error("failed to read the disableSentry flag")
+				return err
+			}
 
+			r.GetRecordConfig(&path, &proxyPort, &appCmd, &appContainer, &networkName, &delay, &ports, &disableSentry)
+
+			if disableSentry == "true"{
+				r.logger.Info("Sentry error reporting is disabled")
+				utils.DisableSentry()
+			}
 			r.logger.Debug("the ports are", zap.Any("ports", ports))
-			r.recorder.CaptureTraffic(path, proxyPort,  appCmd, appContainer, networkName, delay, ports)
+			r.recorder.CaptureTraffic(path, proxyPort,  appCmd, appContainer, networkName, delay, ports, disableSentry)
 			return nil
 		},
 	}
@@ -191,6 +204,8 @@ func (r *Record) GetCmd() *cobra.Command {
 	recordCmd.Flags().StringP("networkName", "n", "", "Name of the application's docker network")
 
 	recordCmd.Flags().Uint64P("delay", "d", 5, "User provided time to run its application")
+
+	recordCmd.Flags().String("disableSentry", "false", "Disable Sentry error reporting")
 
 	recordCmd.Flags().UintSlice("passThroughPorts", []uint{}, "Ports of Outgoing dependency calls to be ignored as mocks")
 
