@@ -4,7 +4,7 @@ source ./../../.github/workflows/workflow_scripts/fake-iid.sh
 
 # Start the postgres database.
 docker network create backend
-echo "check 4"
+echo "check 5"
 
 # Remove old keploy tests and mocks.
 sudo rm -rf keploy/
