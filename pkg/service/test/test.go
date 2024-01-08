@@ -61,6 +61,7 @@ func NewTester(logger *zap.Logger) Tester {
 
 func (t *tester) InitialiseTest(cfg *TestConfig) (InitialiseTestReturn, error) {
 	var returnVal InitialiseTestReturn
+	var err error
 
 	// capturing the code coverage for go bianries built by go-version 1.20^
 	if cfg.WithCoverage {
@@ -120,7 +121,10 @@ func (t *tester) InitialiseTest(cfg *TestConfig) (InitialiseTestReturn, error) {
 	returnVal.YamlStore = yamlStore
 	routineId := pkg.GenerateRandomID()
 	// Initiate the hooks
-	returnVal.LoadedHooks = hooks.NewHook(returnVal.YamlStore, routineId, t.logger)
+	returnVal.LoadedHooks, err = hooks.NewHook(returnVal.YamlStore, routineId, t.logger)
+	if err != nil {
+		return returnVal, fmt.Errorf("error while creating hooks %v", err)
+	}
 
 	select {
 	case <-stopper:
@@ -213,7 +217,7 @@ func (t *tester) Test(path string, testReportPath string, appCmd string, options
 		EnableTele:         enableTele,
 	}
 	initialisedValues, err := t.InitialiseTest(cfg)
-	// Recover from panic and gracfully shutdown
+	// Recover from panic and gracefully shutdown
 	defer initialisedValues.LoadedHooks.Recover(pkg.GenerateRandomID())
 	if err != nil {
 		t.logger.Error("failed to initialise the test", zap.Error(err))
@@ -559,7 +563,7 @@ func (t *tester) RunTestSet(testSet, path, testReportPath, appCmd, appContainer,
 	}
 
 	isApplicationStopped := false
-	// Recover from panic and gracfully shutdown
+	// Recover from panic and gracefully shutdown
 	defer loadedHooks.Recover(pkg.GenerateRandomID())
 	defer func() {
 		if len(appCmd) == 0 && pid != 0 {
