@@ -152,20 +152,28 @@ func UpdateKeployToDocker(cmdName string, isDockerCompose bool, recordFlags Reco
 		reader := bufio.NewReader(os.Stdin)
 		choice, _ := reader.ReadString('\n')
 		choice = strings.ToLower(strings.TrimSpace(choice))
-		//Get the current context.
-		dockerContext := os.Getenv("DOCKER_CONTEXT")
+		//Get the current docker context.
+		cmd := exec.Command("docker", "context", "ls", "--format", "{{.Name}}")
+		out, err := cmd.Output()
+		if err != nil {
+			log.Error("Failed to get the current docker context", err.Error())
+			return
+		}
+		dockerContext := strings.Split(strings.TrimSpace(string(out)), "\n")[0]
+		dockerContext = strings.Split(dockerContext, "\n")[0]
 		if choice == "colima" {
-			if dockerContext == "" {
+			if dockerContext == "default" {
 				log.Error("Error: Docker is using the default context, set to colima using 'docker context use colima'")
 				return
 			}
-			keployAlias = "docker run --pull always --name keploy-v2 -p 16789:16789 --privileged --pid=host -it -v " + os.Getenv("PWD") + ":/files -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys/kernel/debug:/sys/kernel/debug -v /sys/fs/bpf:/sys/fs/bpf -v /var/run/docker.sock:/var/run/docker.sock -v " + os.Getenv("HOME") + "/.keploy-config:/root/.keploy-config -v " + os.Getenv("HOME") + "/.keploy:/root/.keploy --rm ghcr.io/keploy/keploy" + cmdName + " -c "
+			keployAlias = "sudo docker run --name keploy-v2 -e BINARY_TO_DOCKER=true -p 16789:16789 --privileged --pid=host -it -v " + os.Getenv("PWD") + ":/files -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys/kernel/debug:/sys/kernel/debug -v /sys/fs/bpf:/sys/fs/bpf -v /var/run/docker.sock:/var/run/docker.sock -v " + os.Getenv("HOME") + "/.keploy-config:/root/.keploy-config -v " + os.Getenv("HOME") + "/.keploy:/root/.keploy --rm keploylocal " + cmdName + " -c "
 		} else {
 			if dockerContext == "colima" {
 				log.Error("Error: Docker is using the colima context, set to default using 'docker context use default'")
 				return
 			}
-			keployAlias = "sudo docker run --pull always --name keploy-v2 -p 16789:16789 --privileged --pid=host -it -v " + os.Getenv("PWD") + ":/files -v /sys/fs/cgroup:/sys/fs/cgroup -v debugfs:/sys/kernel/debug:rw -v /sys/fs/bpf:/sys/fs/bpf -v /var/run/docker.sock:/var/run/docker.sock -v " + os.Getenv("HOME") + "/.keploy-config:/root/.keploy-config -v " + os.Getenv("HOME") + "/.keploy:/root/.keploy --rm ghcr.io/keploy/keploy" + cmdName + " -c "
+			keployAlias = "sudo docker run --name keploy-v2 -e BINARY_TO_DOCKER=true -p 16789:16789 --privileged --pid=host -it -v " + os.Getenv("PWD") + ":/files -v /sys/fs/cgroup:/sys/fs/cgroup -v debugfs:/sys/kernel/debug:rw -v /sys/fs/bpf:/sys/fs/bpf -v /var/run/docker.sock:/var/run/docker.sock -v " + os.Getenv("HOME") + "/.keploy-config:/root/.keploy-config -v " + os.Getenv("HOME") + "/.keploy:/root/.keploy --rm keploylocal " + cmdName + " -c "
+			fmt.Println("This is the alias", keployAlias)
 		}
 	}
 	if osName == "linux" {
@@ -173,7 +181,7 @@ func UpdateKeployToDocker(cmdName string, isDockerCompose bool, recordFlags Reco
 	}
 	var cmd *exec.Cmd
 	if cmdName == "record" {
-		keployAlias = keployAlias + "\"" + recordFlags.Command + "\""
+		keployAlias = keployAlias + "\"" + recordFlags.Command + "\" "
 		if len(recordFlags.PassThroughPorts) > 0 {
 			keployAlias = keployAlias + " --passThroughPorts " + fmt.Sprintf("%v", recordFlags.PassThroughPorts)
 		}
@@ -187,8 +195,9 @@ func UpdateKeployToDocker(cmdName string, isDockerCompose bool, recordFlags Reco
 			addtionalFlags := "--containerName " + recordFlags.ContainerName + " --buildDelay " + recordFlags.BuildDelay.String() + " --delay " + fmt.Sprintf("%d", recordFlags.Delay) + " --proxyport " + fmt.Sprintf("%d", recordFlags.Proxyport) + " --networkName " + recordFlags.NetworkName + " --enableTele=" + fmt.Sprintf("%v", recordFlags.EnableTele)
 			keployAlias = keployAlias + addtionalFlags
 			cmd = exec.Command("sh", "-c", keployAlias)
+			fmt.Println("This is the alias", keployAlias)
 		} else {
-			addtionalFlags := "--delay" + fmt.Sprintf("%d", recordFlags.Delay) + " --proxyport " + fmt.Sprintf("%d", recordFlags.Proxyport) + " --networkName " + recordFlags.NetworkName + " --enableTele=" + fmt.Sprintf("%v", recordFlags.EnableTele)
+			addtionalFlags := "--delay " + fmt.Sprintf("%d", recordFlags.Delay) + " --proxyport " + fmt.Sprintf("%d", recordFlags.Proxyport) + " --networkName " + recordFlags.NetworkName + " --enableTele=" + fmt.Sprintf("%v", recordFlags.EnableTele)
 			keployAlias = keployAlias + addtionalFlags
 			cmd = exec.Command("sh", "-c", keployAlias)
 		}

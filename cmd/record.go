@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"reflect"
 	"strings"
 	"time"
 
@@ -124,7 +123,6 @@ func (r *Record) GetCmd() *cobra.Command {
 			}
 
 			buildDelay, err := cmd.Flags().GetDuration("buildDelay")
-			fmt.Println("This is the type of buildDelay", reflect.TypeOf(buildDelay))
 			if err != nil {
 				r.logger.Error("Failed to get the build-delay flag", zap.Error((err)))
 				return err
