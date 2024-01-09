@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"time"
 
@@ -123,6 +124,7 @@ func (r *Record) GetCmd() *cobra.Command {
 			}
 
 			buildDelay, err := cmd.Flags().GetDuration("buildDelay")
+			fmt.Println("This is the type of buildDelay", reflect.TypeOf(buildDelay))
 			if err != nil {
 				r.logger.Error("Failed to get the build-delay flag", zap.Error((err)))
 				return err
@@ -171,31 +173,10 @@ func (r *Record) GetCmd() *cobra.Command {
 				return errors.New("missing required -c flag or appCmd in config file")
 			}
 
-			//if user provides relative path
-			if len(path) > 0 && path[0] != '/' {
-				absPath, err := filepath.Abs(path)
-				if err != nil {
-					r.logger.Error("failed to get the absolute path from relative path", zap.Error(err))
-				}
-				path = absPath
-			} else if len(path) == 0 { // if user doesn't provide any path
-				cdirPath, err := os.Getwd()
-				if err != nil {
-					r.logger.Error("failed to get the path of current directory", zap.Error(err))
-				}
-				path = cdirPath
-			} else {
-				// user provided the absolute path
-			}
-
 			if isDockerCmd && buildDelay <= 30*time.Second {
 				r.logger.Warn(fmt.Sprintf("buildDelay is set to %v, incase your docker container takes more time to build use --buildDelay to set custom delay", buildDelay))
 				r.logger.Info(`Example usage: keploy record -c "docker-compose up --build" --buildDelay 35s`)
 			}
-
-			path += "/keploy"
-
-			r.logger.Info("", zap.Any("keploy test and mock path", path))
 
 			var hasContainerName bool
 			if isDockerCmd {
@@ -216,9 +197,41 @@ func (r *Record) GetCmd() *cobra.Command {
 				if dockerCmd == "docker-compose" {
 					isDockerCompose = true
 				}
-				utils.UpdateKeployToDocker("record", appCmd, isDockerCompose, appContainer, buildDelay.String())
+				recordCfg := utils.RecordFlags{
+					Path:             path,
+					Command:          appCmd,
+					ContainerName:    appContainer,
+					Proxyport:        proxyPort,
+					NetworkName:      networkName,
+					Delay:            delay,
+					BuildDelay:       buildDelay,
+					PassThroughPorts: ports,
+					ConfigPath:       configPath,
+					EnableTele:       enableTele,
+				}
+				utils.UpdateKeployToDocker("record", isDockerCompose, recordCfg, utils.TestFlags{})
 				return nil
 			}
+
+			//if user provides relative path
+			if len(path) > 0 && path[0] != '/' {
+				absPath, err := filepath.Abs(path)
+				if err != nil {
+					r.logger.Error("failed to get the absolute path from relative path", zap.Error(err))
+				}
+				path = absPath
+			} else if len(path) == 0 { // if user doesn't provide any path
+				cdirPath, err := os.Getwd()
+				if err != nil {
+					r.logger.Error("failed to get the path of current directory", zap.Error(err))
+				}
+				path = cdirPath
+			} else {
+				// user provided the absolute path
+			}
+			path += "/keploy"
+
+			r.logger.Info("", zap.Any("keploy test and mock path", path))
 
 			r.logger.Debug("the ports are", zap.Any("ports", ports))
 			r.recorder.CaptureTraffic(path, proxyPort, appCmd, appContainer, networkName, delay, buildDelay, ports, &filters, enableTele)
