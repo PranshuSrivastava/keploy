@@ -148,10 +148,6 @@ func UpdateKeployToDocker(cmdName string, isDockerCompose bool, recordFlags Reco
 	}
 	var keployAlias string
 	if osName == "darwin" {
-		fmt.Println("Do you want to use keploy with Docker or Colima? (docker/colima):")
-		reader := bufio.NewReader(os.Stdin)
-		choice, _ := reader.ReadString('\n')
-		choice = strings.ToLower(strings.TrimSpace(choice))
 		//Get the current docker context.
 		cmd := exec.Command("docker", "context", "ls", "--format", "{{.Name}}")
 		out, err := cmd.Output()
@@ -161,20 +157,13 @@ func UpdateKeployToDocker(cmdName string, isDockerCompose bool, recordFlags Reco
 		}
 		dockerContext := strings.Split(strings.TrimSpace(string(out)), "\n")[0]
 		dockerContext = strings.Split(dockerContext, "\n")[0]
-		if choice == "colima" {
-			if dockerContext == "default" {
-				log.Error("Error: Docker is using the default context, set to colima using 'docker context use colima'")
-				return
-			}
-			keployAlias = "sudo docker run --name keploy-v2 -e BINARY_TO_DOCKER=true -p 16789:16789 --privileged --pid=host -it -v " + os.Getenv("PWD") + ":/files -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys/kernel/debug:/sys/kernel/debug -v /sys/fs/bpf:/sys/fs/bpf -v /var/run/docker.sock:/var/run/docker.sock -v " + os.Getenv("HOME") + "/.keploy-config:/root/.keploy-config -v " + os.Getenv("HOME") + "/.keploy:/root/.keploy --rm keploylocal " + cmdName + " -c "
-		} else {
-			if dockerContext == "colima" {
-				log.Error("Error: Docker is using the colima context, set to default using 'docker context use default'")
-				return
-			}
-			keployAlias = "sudo docker run --name keploy-v2 -e BINARY_TO_DOCKER=true -p 16789:16789 --privileged --pid=host -it -v " + os.Getenv("PWD") + ":/files -v /sys/fs/cgroup:/sys/fs/cgroup -v debugfs:/sys/kernel/debug:rw -v /sys/fs/bpf:/sys/fs/bpf -v /var/run/docker.sock:/var/run/docker.sock -v " + os.Getenv("HOME") + "/.keploy-config:/root/.keploy-config -v " + os.Getenv("HOME") + "/.keploy:/root/.keploy --rm keploylocal " + cmdName + " -c "
-			fmt.Println("This is the alias", keployAlias)
+		if dockerContext == "colima" {
+			log.Error("Error: Docker is using the colima context, set to default using 'docker context use default'")
+			return
 		}
+		keployAlias = "sudo docker run --name keploy-v2 -e BINARY_TO_DOCKER=true -p 16789:16789 --privileged --pid=host -it -v " + os.Getenv("PWD") + ":/files -v /sys/fs/cgroup:/sys/fs/cgroup -v debugfs:/sys/kernel/debug:rw -v /sys/fs/bpf:/sys/fs/bpf -v /var/run/docker.sock:/var/run/docker.sock -v " + os.Getenv("HOME") + "/.keploy-config:/root/.keploy-config -v " + os.Getenv("HOME") + "/.keploy:/root/.keploy --rm keploylocal " + cmdName + " -c "
+		fmt.Println("This is the alias", keployAlias)
+
 	}
 	if osName == "linux" {
 		keployAlias = "sudo docker run --name keploy-v2 -e BINARY_TO_DOCKER=true -p 16789:16789 --privileged --pid=host -it -v " + os.Getenv("PWD") + ":/files -v /sys/fs/cgroup:/sys/fs/cgroup -v /sys/kernel/debug:/sys/kernel/debug -v /sys/fs/bpf:/sys/fs/bpf -v /var/run/docker.sock:/var/run/docker.sock -v " + os.Getenv("HOME") + "/.keploy-config:/root/.keploy-config -v " + os.Getenv("HOME") + "/.keploy:/root/.keploy --rm keploylocal " + cmdName + " -c "
