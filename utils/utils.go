@@ -162,8 +162,9 @@ func getAlias(keployAlias *string, logger *zap.Logger) {
 		dockerContext := strings.Split(strings.TrimSpace(string(out)), "\n")[0]
 		dockerContext = strings.Split(dockerContext, "\n")[0]
 		if dockerContext == "colima" {
-			logger.Error("Error: Docker is using the colima context, set to default using 'docker context use default'")
-			return
+			logger.Info("Starting keploy in docker with colima context, as that is the current context.")
+		}else{
+			logger.Info("Starting keploy in docker with default context, as that is the current context.")
 		}
 		*keployAlias = "sudo docker run --pull always --name keploy-v2 -e BINARY_TO_DOCKER=true -p 16789:16789 --privileged --pid=host -it -v " + os.Getenv("PWD") + ":/files -v /sys/fs/cgroup:/sys/fs/cgroup -v debugfs:/sys/kernel/debug:rw -v /sys/fs/bpf:/sys/fs/bpf -v /var/run/docker.sock:/var/run/docker.sock -v " + os.Getenv("HOME") + "/.keploy-config:/root/.keploy-config -v " + os.Getenv("HOME") + "/.keploy:/root/.keploy --rm ghcr.io/keploy/keploy "
 	} else if osName == "linux" {
