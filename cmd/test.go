@@ -310,7 +310,7 @@ func (t *Test) GetCmd() *cobra.Command {
 
 			mongoPassword, err := cmd.Flags().GetString("mongoPassword")
 			if err != nil {
-				t.logger.Error("failed to read the ports of outgoing calls to be ignored")
+				t.logger.Error("failed to read the mongo password")
 				return err
 			}
 
