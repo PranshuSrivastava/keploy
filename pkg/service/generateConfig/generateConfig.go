@@ -5,9 +5,9 @@ import (
 	"os/exec"
 	"sync"
 
+	"go.keploy.io/server/utils"
 	"go.uber.org/zap"
 	"gopkg.in/yaml.v3"
-  "go.keploy.io/server/utils"
 )
 
 var Emoji = "\U0001F430" + " Keploy:"
@@ -34,10 +34,17 @@ record:
   networkName: ""
   delay: 5
   buildDelay: 30s
-  passThroughPorts: []
-  filters:
-    ReqHeader: []
-    urlMethods: {}
+  tests: 
+    filters:
+      - path: ""
+        urlMethods: []
+        headers: {}
+        host: ""
+  stubs:
+    filters:
+      - path: ""
+        host: ""
+        ports: 0
 test:
   path: ""
   # mandatory
@@ -46,7 +53,7 @@ test:
   containerName: ""
   networkName: ""
   # example: "test-set-1": ["test-1", "test-2", "test-3"]
-  tests:
+  selectedTests: 
   # to use globalNoise, please follow the guide at the end of this file.
   globalNoise:
     global:
@@ -55,10 +62,15 @@ test:
   delay: 5
   buildDelay: 30s
   apiTimeout: 5
-  passThroughPorts: []
+  ignoreOrdering: false
+  stubs:
+    filters:
+      - path: ""
+        host: ""
+        ports: 0
   withCoverage: false
   coverageReportPath: ""
-  `
+`
 
 func (g *generatorConfig) GenerateConfig(filePath string) {
 	var node yaml.Node
@@ -71,7 +83,7 @@ func (g *generatorConfig) GenerateConfig(filePath string) {
 		g.logger.Fatal("Failed to marshal the config", zap.Error(err))
 	}
 
-  finalOutput := append(results, []byte(utils.ConfigGuide)...)
+	finalOutput := append(results, []byte(utils.ConfigGuide)...)
 
 	err = os.WriteFile(filePath, finalOutput, os.ModePerm)
 	if err != nil {

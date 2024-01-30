@@ -27,7 +27,7 @@ func NewCmdTest(logger *zap.Logger) *Test {
 	}
 }
 
-func readTestConfig(configPath string) (*models.Test, error) {
+func ReadTestConfig(configPath string) (*models.Test, error) {
 	file, err := os.OpenFile(configPath, os.O_RDONLY, os.ModePerm)
 	if err != nil {
 		return nil, err
@@ -42,12 +42,12 @@ func readTestConfig(configPath string) (*models.Test, error) {
 	return &doc.Test, nil
 }
 
-func (t *Test) getTestConfig(path *string, proxyPort *uint32, appCmd *string, tests *map[string][]string, appContainer, networkName *string, Delay *uint64, buildDelay *time.Duration, passThorughPorts *[]uint, apiTimeout *uint64, globalNoise *models.GlobalNoise, testSetNoise *models.TestsetNoise, coverageReportPath *string, withCoverage *bool, configPath string) error {
+func (t *Test) getTestConfig(path *string, proxyPort *uint32, appCmd *string, tests *map[string][]string, appContainer, networkName *string, Delay *uint64, buildDelay *time.Duration, passThroughPorts *[]uint, apiTimeout *uint64, globalNoise *models.GlobalNoise, testSetNoise *models.TestsetNoise, coverageReportPath *string, withCoverage *bool, configPath string, ignoreOrdering *bool, passThroughHosts *[]models.Filters) error {
 	configFilePath := filepath.Join(configPath, "keploy-config.yaml")
 	if isExist := utils.CheckFileExists(configFilePath); !isExist {
 		return errFileNotFound
 	}
-	confTest, err := readTestConfig(configFilePath)
+	confTest, err := ReadTestConfig(configFilePath)
 	if err != nil {
 		return fmt.Errorf("failed to get the test config from config file due to error: %s", err)
 	}
@@ -60,7 +60,7 @@ func (t *Test) getTestConfig(path *string, proxyPort *uint32, appCmd *string, te
 	if *appCmd == "" {
 		*appCmd = confTest.Command
 	}
-	for testset, testcases := range confTest.Tests {
+	for testset, testcases := range confTest.SelectedTests {
 		if _, ok := (*tests)[testset]; !ok {
 			(*tests)[testset] = testcases
 		}
@@ -77,9 +77,7 @@ func (t *Test) getTestConfig(path *string, proxyPort *uint32, appCmd *string, te
 	if *buildDelay == 30*time.Second && confTest.BuildDelay != 0 {
 		*buildDelay = confTest.BuildDelay
 	}
-	if len(*passThorughPorts) == 0 {
-		*passThorughPorts = confTest.PassThroughPorts
-	}
+
 	if len(*coverageReportPath) == 0 {
 		*coverageReportPath = confTest.CoverageReportPath
 	}
@@ -89,6 +87,18 @@ func (t *Test) getTestConfig(path *string, proxyPort *uint32, appCmd *string, te
 	}
 	*globalNoise = confTest.GlobalNoise.Global
 	*testSetNoise = confTest.GlobalNoise.Testsets
+	if !*ignoreOrdering {
+		*ignoreOrdering = confTest.IgnoreOrdering
+	}
+	passThroughPortProvided := len(*passThroughPorts) == 0
+	for _, filter := range confTest.Stubs.Filters {
+		if filter.Port != 0 && filter.Host == "" && filter.Path == "" && passThroughPortProvided {
+			*passThroughPorts = append(*passThroughPorts, filter.Port)
+		} else {
+			*passThroughHosts = append(*passThroughHosts, filter)
+		}
+	}
+
 	return nil
 }
 
@@ -217,6 +227,12 @@ func (t *Test) GetCmd() *cobra.Command {
 				return err
 			}
 
+			ignoreOrdering, err := cmd.Flags().GetBool("ignoreOrdering")
+			if err != nil {
+				t.logger.Error("failed to read the ignore ordering flag")
+				return err
+			}
+
 			tests := map[string][]string{}
 
 			testsets, err := cmd.Flags().GetStringSlice("testsets")
@@ -232,10 +248,12 @@ func (t *Test) GetCmd() *cobra.Command {
 			globalNoise := make(models.GlobalNoise)
 			testsetNoise := make(models.TestsetNoise)
 
-			err = t.getTestConfig(&path, &proxyPort, &appCmd, &tests, &appContainer, &networkName, &delay, &buildDelay, &ports, &apiTimeout, &globalNoise, &testsetNoise, &coverageReportPath, &withCoverage, configPath)
+			passThroughHosts := []models.Filters{}
+
+			err = t.getTestConfig(&path, &proxyPort, &appCmd, &tests, &appContainer, &networkName, &delay, &buildDelay, &ports, &apiTimeout, &globalNoise, &testsetNoise, &coverageReportPath, &withCoverage, configPath, &ignoreOrdering, &passThroughHosts)
 			if err != nil {
 				if err == errFileNotFound {
-					t.logger.Info("continuing without configuration file because file not found")
+					t.logger.Info("Keploy config not found, continuing without configuration")
 				} else {
 					t.logger.Error("", zap.Error(err))
 				}
@@ -406,6 +424,8 @@ func (t *Test) GetCmd() *cobra.Command {
 					TestsetNoise:       testsetNoise,
 					WithCoverage:       withCoverage,
 					CoverageReportPath: coverageReportPath,
+					IgnoreOrdering:     ignoreOrdering,
+					PassthroughHosts:   passThroughHosts,
 				}, enableTele)
 			}
 
@@ -446,9 +466,12 @@ func (t *Test) GetCmd() *cobra.Command {
 
 	testCmd.Flags().Bool("enableTele", true, "Switch for telemetry")
 
+	testCmd.Flags().Bool("ignoreOrdering", false, "Ignore ordering of array in response")
+
 	testCmd.Flags().MarkHidden("enableTele")
 
 	testCmd.Flags().Bool("withCoverage", false, "Capture the code coverage of the go binary in the command flag.")
+
 	testCmd.Flags().Lookup("withCoverage").NoOptDefVal = "true"
 
 	testCmd.Flags().Bool("coverage", false, "Capture the code coverage of the go binary in the command flag.")
