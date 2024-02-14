@@ -233,13 +233,16 @@ func getAlias(keployAlias *string, logger *zap.Logger) error {
 func RunInDocker(logger *zap.Logger, command string) error{
 	var keployAlias string
 	//Get the correct keploy alias.
-	getAlias(&keployAlias, logger)
+	err := getAlias(&keployAlias, logger)
+	if err != nil{
+		return err
+	}
 	cmd := exec.Command("sh", "-c", keployAlias+command)
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = os.Stdin
 	cmd.Stderr = os.Stderr
 	logger.Debug("This is the keploy alias", zap.String("keployAlias:", keployAlias))
-	err := cmd.Run()
+	err = cmd.Run()
 	if err != nil {
 		logger.Error("Failed to start keploy in docker", zap.Error(err))
 		return err
