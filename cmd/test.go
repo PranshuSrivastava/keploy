@@ -108,6 +108,29 @@ type Test struct {
 	logger *zap.Logger
 }
 
+func CheckForDockerCmd(isDockerCmd bool, appCmd string, logger *zap.Logger) (error, bool) {
+	//Check if app command starts with docker or  docker-compose.
+	dockerRelatedCmd, _ := utils.IsDockerRelatedCmd(appCmd)
+	if !isDockerCmd && dockerRelatedCmd {
+		if utils.Version == "2-dev" {
+			return errors.New("you are trying to start a docker application from keploy binary. Please follow the documentation to use keploy in docker environment"), true
+		}
+		// Get the complete args for the command.
+		var argsString strings.Builder
+		for _, arg := range os.Args[1:] {
+			if strings.Contains(arg, " ") {
+				// Add the quotes to the args.
+				argsString.WriteString(" \"" + arg + "\"")
+			} else {
+				argsString.WriteString(" " + arg)
+			}
+		}
+		utils.RunInDocker(logger, argsString.String())
+		return nil, true
+	}
+	return nil, false
+}
+
 func (t *Test) GetCmd() *cobra.Command {
 	var testCmd = &cobra.Command{
 		Use:     "test",
@@ -115,7 +138,15 @@ func (t *Test) GetCmd() *cobra.Command {
 		Example: `sudo -E env PATH=$PATH keploy test -c "/path/to/user/app" --delay 6`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			isDockerCmd := len(os.Getenv("IS_DOCKER_CMD")) > 0
-
+			appCmd, err := cmd.Flags().GetString("command")
+			if err != nil {
+				t.logger.Error("Failed to get the command to run the user application", zap.Error((err)))
+				return err
+			}
+			err, ok := CheckForDockerCmd(isDockerCmd, appCmd, t.logger)
+			if ok {
+				return err
+			}
 			path, err := cmd.Flags().GetString("path")
 			if err != nil {
 				t.logger.Error("failed to read the testcase path input")
@@ -129,12 +160,6 @@ func (t *Test) GetCmd() *cobra.Command {
 			coverageReportPath, err := cmd.Flags().GetString("coverageReportPath")
 			if err != nil {
 				t.logger.Error("failed to read the go coverage directory path", zap.Error(err))
-				return err
-			}
-
-			appCmd, err := cmd.Flags().GetString("command")
-			if err != nil {
-				t.logger.Error("Failed to get the command to run the user application", zap.Error((err)))
 				return err
 			}
 
@@ -345,33 +370,6 @@ func (t *Test) GetCmd() *cobra.Command {
 			}
 
 			t.logger.Debug("the configuration for mocking mongo connection", zap.Any("password", mongoPassword))
-			//Check if app command starts with docker or  docker-compose.
-			dockerRelatedCmd, dockerCmd := utils.IsDockerRelatedCmd(appCmd)
-			if !isDockerCmd && dockerRelatedCmd {
-				isDockerCompose := false
-				if dockerCmd == "docker-compose" {
-					isDockerCompose = true
-				}
-				testCfg := utils.TestFlags{
-					Path:               path,
-					Proxyport:          proxyPort,
-					Command:            appCmd,
-					Testsets:           testsets,
-					ContainerName:      appContainer,
-					NetworkName:        networkName,
-					Delay:              delay,
-					BuildDelay:         buildDelay,
-					ApiTimeout:         apiTimeout,
-					PassThroughPorts:   ports,
-					ConfigPath:         configPath,
-					MongoPassword:      mongoPassword,
-					CoverageReportPath: coverageReportPath,
-					EnableTele:         enableTele,
-					WithCoverage:       withCoverage,
-				}
-				utils.UpdateKeployToDocker("test", isDockerCompose, testCfg, t.logger)
-				return nil
-			}
 
 			//if user provides relative path
 			if len(path) > 0 && path[0] != '/' {
@@ -397,17 +395,17 @@ func (t *Test) GetCmd() *cobra.Command {
 
 			if generateTestReport {
 				testReportPath = path + "/testReports"
-	
+
 				testReportPath, err = pkg.GetNextTestReportDir(testReportPath, models.TestRunTemplateName)
-					t.logger.Info("", zap.Any("keploy testReport path", testReportPath))
-					if err != nil {
-						t.logger.Error("failed to get the next test report directory", zap.Error(err))
-						return err
-					}
+				t.logger.Info("", zap.Any("keploy testReport path", testReportPath))
+				if err != nil {
+					t.logger.Error("failed to get the next test report directory", zap.Error(err))
+					return err
+				}
 			} else {
 				t.logger.Info("Test Reports are not being generated since generateTestReport flag is set false")
 			}
-			
+
 			var hasContainerName bool
 			if isDockerCmd {
 				if strings.Contains(appCmd, "--name") {

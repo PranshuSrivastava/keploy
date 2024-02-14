@@ -105,15 +105,18 @@ func (r *Record) GetCmd() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			isDockerCmd := len(os.Getenv("IS_DOCKER_CMD")) > 0
 
-			path, err := cmd.Flags().GetString("path")
-			if err != nil {
-				r.logger.Error("failed to read the testcase path input")
-				return err
-			}
-
 			appCmd, err := cmd.Flags().GetString("command")
 			if err != nil {
 				r.logger.Error("Failed to get the command to run the user application", zap.Error((err)))
+				return err
+			}
+			err, ok := CheckForDockerCmd(isDockerCmd, appCmd, r.logger)
+			if ok {
+				return err
+			}
+			path, err := cmd.Flags().GetString("path")
+			if err != nil {
+				r.logger.Error("failed to read the testcase path input")
 				return err
 			}
 
@@ -232,28 +235,6 @@ func (r *Record) GetCmd() *cobra.Command {
 						return nil
 					}
 				}
-			}
-			//Check if app command starts with docker or sudo docker.
-			dockerRelatedCmd, dockerCmd := utils.IsDockerRelatedCmd(appCmd)
-			if !isDockerCmd && dockerRelatedCmd {
-				isDockerCompose := false
-				if dockerCmd == "docker-compose" {
-					isDockerCompose = true
-				}
-				recordCfg := utils.RecordFlags{
-					Path:             path,
-					Command:          appCmd,
-					ContainerName:    appContainer,
-					Proxyport:        proxyPort,
-					NetworkName:      networkName,
-					Delay:            delay,
-					BuildDelay:       buildDelay,
-					PassThroughPorts: ports,
-					ConfigPath:       configPath,
-					EnableTele:       enableTele,
-				}
-				utils.UpdateKeployToDocker("record", isDockerCompose, recordCfg, r.logger)
-				return nil
 			}
 
 			//if user provides relative path

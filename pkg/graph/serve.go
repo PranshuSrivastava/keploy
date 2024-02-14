@@ -61,12 +61,27 @@ func (g *graph) Serve(path string, proxyPort uint32, mongopassword, testReportPa
 	tele.Ping(false)
 	ys := yaml.NewYamlStore(path, path, "", "", g.logger, tele)
 	routineId := pkg.GenerateRandomID()
+	configMocks, err := ys.ReadConfigMocks("test-set-0")
+	if err != nil {
+		g.logger.Error("error while reading config mocks", zap.Error(err))
+		return
+	}
 	// Initiate the hooks
 	loadedHooks, err := hooks.NewHook(ys, routineId, g.logger)
 	if err != nil {
 		g.logger.Error("error while creating hooks", zap.Error(err))
 		return
 	}
+	var readConfigMocks []*models.Mock
+	for _, mock := range configMocks {
+		configMock, ok := mock.(*models.Mock)
+		if !ok {
+			continue
+		}
+		readConfigMocks = append(readConfigMocks, configMock)
+	}
+	// Load the config mocks
+	loadedHooks.SetConfigMocks(readConfigMocks)
 
 	// Recover from panic and gracefully shutdown
 	defer loadedHooks.Recover(routineId)
