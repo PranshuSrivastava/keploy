@@ -146,7 +146,6 @@ func decodeOutgoingMongo(requestBuffer []byte, clientConn, destConn net.Conn, h 
 			maxMatchScore := 0.0
 			bestMatchIndex := -1
 			for configIndex, configMock := range configMocks {
-				// fmt.Println("This is the config mock", configMock.Kind)
 				logger.Debug("the config mock is: ", zap.Any("config mock", configMock), zap.Any("actual request", mongoRequests))
 				if len(configMock.Spec.MongoRequests) == len(mongoRequests) {
 					for i, req := range configMock.Spec.MongoRequests {
