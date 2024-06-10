@@ -11,6 +11,7 @@ type Config struct {
 	Path                  string       `json:"path" yaml:"path" mapstructure:"path" `
 	AppID                 string       `json:"appId" yaml:"appId" mapstructure:"appId"`
 	ReRecord              string       `json:"rerecord" yaml:"rerecord" mapstructure:"rerecord"`
+	Templatize            Templatize    `json:"templatize" yaml:"templatize" mapstructure:"templatize"`
 	Command               string       `json:"command" yaml:"command" mapstructure:"command"`
 	Port                  uint32       `json:"port" yaml:"port" mapstructure:"port"`
 	DNSPort               uint32       `json:"dnsPort" yaml:"dnsPort" mapstructure:"dnsPort"`
@@ -32,6 +33,10 @@ type Config struct {
 	KeployContainer       string       `json:"keployContainer" yaml:"keployContainer" mapstructure:"keployContainer"`
 	KeployNetwork         string       `json:"keployNetwork" yaml:"keployNetwork" mapstructure:"keployNetwork"`
 	CommandType           string       `json:"cmdType" yaml:"cmdType" mapstructure:"cmdType"`
+}
+
+type Templatize struct {
+	TestSets []string `json:"testSets" yaml:"testSets" mapstructure:"testSets"`
 }
 
 type Record struct {

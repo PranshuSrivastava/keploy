@@ -2,6 +2,7 @@ package replay
 
 import (
 	"context"
+	// "encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/k0kubun/pp/v3"
+	// "github.com/hoisie/mustache"
 	"go.keploy.io/server/v2/config"
 	"go.keploy.io/server/v2/pkg"
 	"go.keploy.io/server/v2/pkg/models"
@@ -368,7 +370,7 @@ func (r *Replayer) RunTestSet(ctx context.Context, testSetID string, testRunID s
 	var exitLoop bool
 	// var to store the error in the loop
 	var loopErr error
-
+	utils.ReadTempValues(testSetID)
 	for _, testCase := range testCases {
 
 		if _, ok := selectedTests[testCase.Name]; !ok && len(selectedTests) != 0 {
@@ -419,7 +421,6 @@ func (r *Replayer) RunTestSet(ctx context.Context, testSetID string, testRunID s
 			}
 			r.logger.Debug("", zap.Any("replaced URL in case of docker env", testCase.HTTPReq.URL))
 		}
-
 		resp, loopErr := requestMockemulator.SimulateRequest(runTestSetCtx, appID, testCase, testSetID)
 		if loopErr != nil {
 			utils.LogError(r.logger, err, "failed to simulate request")
@@ -591,7 +592,7 @@ func (r *Replayer) compareResp(tc *models.TestCase, actualResponse *models.HTTPR
 	if tsNoise, ok := r.config.Test.GlobalNoise.Testsets[testSetID]; ok {
 		noiseConfig = LeftJoinNoise(r.config.Test.GlobalNoise.Global, tsNoise)
 	}
-	return match(tc, actualResponse, noiseConfig, r.config.Test.IgnoreOrdering, r.logger)
+	return Match(tc, actualResponse, noiseConfig, r.config.Test.IgnoreOrdering, r.logger)
 }
 
 func (r *Replayer) printSummary(ctx context.Context, testRunResult bool) {
